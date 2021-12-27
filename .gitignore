@@ -1,0 +1,11 @@
+# Tests
+FOCtests/
+
+*.exe
+
+# *.pnm
+# *.ppm
+# *.pgm
+
+/*/picTest8*
+/*/rgb*
