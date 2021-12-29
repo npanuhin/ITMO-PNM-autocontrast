@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 #include <chrono>
 #include <omp.h>
 
@@ -20,12 +21,6 @@ using namespace std;
 // inline bool file_exists(const string& name) {
 //   struct stat buffer;   
 //   return (stat (name.c_str(), &buffer) == 0); 
-// }
-
-
-// void autocontrast_rgb(int width, int height, FILE input, string output_path, float coeff, bool debug) {
-//     int size = width * height;
-
 // }
 
 
@@ -304,8 +299,8 @@ void handle_image(string input_path, string output_path, float coeff, bool debug
 int main(int argc, char* argv[]) {
     omp_set_nested(1);
 
-    omp_set_num_threads(72);
-    handle_image("images/picTest9.pnm", "result/picTest9.pnm", 0, true);
+    // omp_set_num_threads(72);
+    // handle_image("images/picTest9.pnm", "result/picTest9.pnm", 0, true);
 
     // omp_set_num_threads(72);
     // handle_image("images/rgb.pnm", "result/rgb.pnm", 0, false);
@@ -316,13 +311,37 @@ int main(int argc, char* argv[]) {
     //     omp_set_num_threads(1 << thread_cnt);
     //     handle_image("images/rgb.pnm", "result/rgb.pnm", 0, false);
     // }
-    return 1;
+    // return 1;
 
 
     if (argc > 1) {
-        for (int i = 1; i < argc; ++i) {
-            cout << argv[i] << endl;
+        if (argc < 5) {
+            cout << "Too few arguments" << endl;
+            return 1;
         }
+
+        istringstream ss1(argv[1]);
+        int threads_count;
+        if (!(ss1 >> threads_count)) {
+            cout << "Invalid number: " << argv[1] << endl;
+            return 1;
+        } else if (!ss1.eof()) {
+            cout << "Trailing characters after number: " << argv[1] << endl;
+            return 1;
+        }
+
+        istringstream ss2(argv[4]);
+        double coeff;
+        if (!(ss2 >> coeff)) {
+            cout << "Invalid number: " << argv[4] << endl;
+            return 1;
+        } else if (!ss2.eof()) {
+            cout << "Trailing characters after number: " << argv[4] << endl;
+            return 1;
+        }
+
+        omp_set_num_threads(threads_count);
+        handle_image(argv[2], argv[3], (float) coeff);
 
     } else {
         cout << "No arguments specified, running with debug configuration..." << endl;
@@ -332,6 +351,7 @@ int main(int argc, char* argv[]) {
         // handle_image("images/rgb.pnm", "result/rgb.pnm", 0, false);
 
         // for (int i = 0; i <= 12; ++i) {
+        //     if (i == 8) continue;
         //     handle_image(
         //         "images/picTest" + to_string(i) + ".pnm",
         //         "result/picTest" + to_string(i) + ".pnm",
