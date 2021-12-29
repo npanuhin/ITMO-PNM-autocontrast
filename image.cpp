@@ -22,6 +22,13 @@ using namespace std;
 //   return (stat (name.c_str(), &buffer) == 0); 
 // }
 
+
+// void autocontrast_rgb(int width, int height, FILE input, string output_path, float coeff, bool debug) {
+//     int size = width * height;
+
+// }
+
+
 void handle_image(string input_path, string output_path, float coeff, bool debug=false) {
     if (debug) cout << "Handling \"" << input_path << "\"..." << endl;
     chrono::time_point<chrono::high_resolution_clock> start_time, end_time;
@@ -44,12 +51,14 @@ void handle_image(string input_path, string output_path, float coeff, bool debug
         return;
     }
 
-    if (first_indentifier != 'P' || (second_indentifier != '6')) {
+    if (first_indentifier != 'P' || (second_indentifier != '5' && second_indentifier != '6')) {
         cout << "PNM file not recognized: \"P5\" or \"P6\" not found" << endl;
         return;
     }
 
-    int size = width * height;
+    bool colored = (second_indentifier == '6');
+    int size = width * height, colorwise_size = (colored ? 3 * size : size);
+
     if (debug) cout << "width: " << width << "\nheight: " << height << "\nsize: " << size << endl;
 
 
@@ -57,12 +66,24 @@ void handle_image(string input_path, string output_path, float coeff, bool debug
 
     // uint8_t image[height][width][3];
     // uint8_t *image = (uint8_t *) malloc(sizeof(uint8_t) * size * 3);
-    
-    uint8_t **image = (uint8_t **) malloc(sizeof(uint8_t*) * 3);
-    uint8_t *raw_image = (uint8_t *) malloc(sizeof(uint8_t) * 3 * size);
-    for (int color = 0; color < 3; ++color) image[color] = raw_image + size * color;
 
-    if (!image || !raw_image) {
+    uint8_t **rgb_image;
+    uint8_t *raw_image;
+    
+    if (colored) {
+        rgb_image = (uint8_t **) malloc(sizeof(uint8_t*) * 3);
+        raw_image = (uint8_t *) malloc(sizeof(uint8_t) * colorwise_size);
+        for (int color = 0; color < 3; ++color) rgb_image[color] = raw_image + size * color;
+
+        if (!rgb_image) {
+            cout << "Can not allocate memory for this file" << endl;
+            return;
+        }
+    } else {
+        raw_image = (uint8_t *) malloc(sizeof(uint8_t) * size);
+    }
+
+    if (!raw_image) {
         cout << "Can not allocate memory for this file" << endl;
         return;
     }
@@ -75,12 +96,22 @@ void handle_image(string input_path, string output_path, float coeff, bool debug
         start_time = std::chrono::high_resolution_clock::now();
     }
 
-    char pixel_row[3 * width];
-    for (int y = 0; y < height; ++y) {
-        fread(pixel_row, 1, 3 * width, input);
-        for (int x = 0; x < width; ++x) {
-            for (int color = 0; color < 3; ++color) {
-                image[color][y * width + x] = (uint8_t) pixel_row[x * 3 + color];
+    char pixel_row[colored ? 3 * width : width];
+
+    if (colored) {
+        for (int y = 0; y < height; ++y) {
+            fread(pixel_row, 1, 3 * width, input);
+            for (int x = 0; x < width; ++x) {
+                for (int color = 0; color < 3; ++color) {
+                    rgb_image[color][y * width + x] = (uint8_t) pixel_row[x * 3 + color];
+                }
+            }
+        }
+    } else {
+        for (int y = 0; y < height; ++y) {
+            fread(pixel_row, 1, width, input);
+            for (int x = 0; x < width; ++x) {
+                raw_image[y * width + x] = (uint8_t) pixel_row[x];
             }
         }
     }
@@ -101,7 +132,7 @@ void handle_image(string input_path, string output_path, float coeff, bool debug
 
     // ------------------------- Frequencies -------------------------
     // int freq_threads = THREADS_COUNT, thread_block_size = (float) size / freq_threads;
-    int freq_threads = THREADS_COUNT, thread_block_size = (size * 3) / THREADS_COUNT;
+    int freq_threads = THREADS_COUNT, thread_block_size = colorwise_size / THREADS_COUNT;
     size_t freq[256] = {0};
 
     if (debug) start_time = std::chrono::high_resolution_clock::now();
@@ -133,10 +164,8 @@ void handle_image(string input_path, string output_path, float coeff, bool debug
         start_time = std::chrono::high_resolution_clock::now();
     }
 
-    for (int pixel_index = thread_block_size * freq_threads; pixel_index < size * 3; ++pixel_index) {
-        for (int color = 0; color < 3; ++color) {
-            ++freq[raw_image[pixel_index]];
-        }
+    for (int pixel_index = thread_block_size * freq_threads; pixel_index < colorwise_size; ++pixel_index) {
+        ++freq[raw_image[pixel_index]];
     }
 
     if (debug) {
@@ -195,7 +224,7 @@ void handle_image(string input_path, string output_path, float coeff, bool debug
     if (debug) start_time = std::chrono::high_resolution_clock::now();
 
     #pragma omp parallel for
-    for (int pixel_index = 0; pixel_index < 3 * size; ++pixel_index) {
+    for (int pixel_index = 0; pixel_index < colorwise_size; ++pixel_index) {
         raw_image[pixel_index] = mapping[raw_image[pixel_index]];
     }
 
@@ -235,15 +264,24 @@ void handle_image(string input_path, string output_path, float coeff, bool debug
 
     FILE * output = fopen(output_path.c_str(), "wb");
 
-    fprintf(output, "P6\n%d %d\n%d\n", width, height, color_space);
+    fprintf(output, "P%d\n%d %d\n%d\n", (colored ? 6 : 5), width, height, color_space);
 
-    for (int y = 0; y < height; ++y) {
-        for (int x = 0; x < width; ++x) {
-            for (int color = 0; color < 3; ++color) {
-                pixel_row[x * 3 + color] = (char) image[color][y * width + x];
+    if (colored) {
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                for (int color = 0; color < 3; ++color) {
+                    pixel_row[x * 3 + color] = (char) rgb_image[color][y * width + x];
+                }
             }
+            fwrite(pixel_row, 1, 3 * width, output);
         }
-        fwrite(pixel_row, 1, 3 * width, output);
+    } else {
+        for (int y = 0; y < height; ++y) {
+            for (int x = 0; x < width; ++x) {
+                pixel_row[x] = (char) raw_image[y * width + x];
+            }
+            fwrite(pixel_row, 1, width, output);
+        }
     }
 
     fclose(output);
@@ -255,7 +293,7 @@ void handle_image(string input_path, string output_path, float coeff, bool debug
 
     // ===================================================== THE END ======================================================
 
-    free(image);
+    if (colored) free(rgb_image);
     free(raw_image);
 
     if (debug) {
@@ -266,10 +304,14 @@ void handle_image(string input_path, string output_path, float coeff, bool debug
 int main(int argc, char* argv[]) {
     omp_set_nested(1);
 
+    omp_set_num_threads(72);
+    handle_image("images/picTest9.pnm", "result/picTest9.pnm", 0, true);
+
     // omp_set_num_threads(72);
     // handle_image("images/rgb.pnm", "result/rgb.pnm", 0, false);
 
-    handle_image("images/rgb.pnm", "result/rgb.pnm", 0, false);
+    // omp_set_num_threads(1);
+    // handle_image("images/rgb.pnm", "result/rgb.pnm", 0, false);
     // for (int thread_cnt = 0; thread_cnt < 8; ++thread_cnt) {
     //     omp_set_num_threads(1 << thread_cnt);
     //     handle_image("images/rgb.pnm", "result/rgb.pnm", 0, false);
