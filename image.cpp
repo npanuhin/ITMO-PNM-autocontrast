@@ -185,17 +185,17 @@ void handle_image(string input_path, string output_path, float coeff, bool debug
     }
 
     // ----------------------------- Processing ------------------------------
-    float tmp = (float) 255.0 / (source_max - source_min), s_min = source_min;
+    float tmp = (float) 255.0 / (source_max - source_min);
 
     uint8_t mapping[256];
     for (int i = 0; i < 256; ++i) {
-        mapping[i] = min((float) 255.0, max((float) 0.0, i - s_min) * tmp);
+        mapping[i] = min((float) 255.0, (float) max(0, i - source_min) * tmp);
     }
 
     if (debug) start_time = std::chrono::high_resolution_clock::now();
 
     #pragma omp parallel for
-    for (int pixel_index = 0; pixel_index < size; ++pixel_index) {
+    for (int pixel_index = 0; pixel_index < 3 * size; ++pixel_index) {
         raw_image[pixel_index] = mapping[raw_image[pixel_index]];
     }
 
@@ -269,12 +269,12 @@ int main(int argc, char* argv[]) {
     // omp_set_num_threads(72);
     // handle_image("images/rgb.pnm", "result/rgb.pnm", 0, false);
 
-    // handle_image("images/rgb.pnm", "result/rgb.pnm", 0, false);
-
+    handle_image("images/rgb.pnm", "result/rgb.pnm", 0, false);
     // for (int thread_cnt = 0; thread_cnt < 8; ++thread_cnt) {
     //     omp_set_num_threads(1 << thread_cnt);
     //     handle_image("images/rgb.pnm", "result/rgb.pnm", 0, false);
     // }
+    return 1;
 
 
     if (argc > 1) {
@@ -285,16 +285,16 @@ int main(int argc, char* argv[]) {
     } else {
         cout << "No arguments specified, running with debug configuration..." << endl;
 
-        handle_image("images/low_contrast.small.pnm", "result/low_contrast.small.pnm", 0.01, false);
-        handle_image("images/low_contrast.large.pnm", "result/low_contrast.large.pnm", 0.01, false);
-        handle_image("images/rgb.pnm", "result/rgb.pnm", 0, false);
+        // handle_image("images/low_contrast.small.pnm", "result/low_contrast.small.pnm", 0.01, false);
+        // handle_image("images/low_contrast.large.pnm", "result/low_contrast.large.pnm", 0.01, false);
+        // handle_image("images/rgb.pnm", "result/rgb.pnm", 0, false);
 
-        for (int i = 0; i <= 12; ++i) {
-            handle_image(
-                "images/picTest" + to_string(i) + ".pnm",
-                "result/picTest" + to_string(i) + ".pnm",
-                0
-            );
-        }
+        // for (int i = 0; i <= 12; ++i) {
+        //     handle_image(
+        //         "images/picTest" + to_string(i) + ".pnm",
+        //         "result/picTest" + to_string(i) + ".pnm",
+        //         0
+        //     );
+        // }
     }
 }
