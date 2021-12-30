@@ -65,13 +65,13 @@ void handle_image(string input_path, string output_path, float coeff, bool debug
 
     if (debug) {
         cout << "Reading file..." << endl;
-        start_time = std::chrono::high_resolution_clock::now();
+        start_time = chrono::high_resolution_clock::now();
     }
 
     fread(image, 1, colorwise_size, input);
 
     if (debug) {
-        end_time = std::chrono::high_resolution_clock::now();
+        end_time = chrono::high_resolution_clock::now();
         cout << "Read in " << chrono::duration_cast<chrono::milliseconds>(end_time - start_time).count() << "ms" << endl;
     }
 
@@ -82,13 +82,13 @@ void handle_image(string input_path, string output_path, float coeff, bool debug
     // ================================================== PROCESSING ===================================================
 
     if (debug) cout << '\n' << "Processing..." << endl;
-    start_time = std::chrono::high_resolution_clock::now();
+    start_time = chrono::high_resolution_clock::now();
 
     // ------------------------- Frequencies -------------------------
     int freq_threads = THREADS_COUNT, thread_block_size = colorwise_size / THREADS_COUNT;
     size_t freq[256] = {0};
 
-    if (debug) start_time = std::chrono::high_resolution_clock::now();
+    if (debug) start_time = chrono::high_resolution_clock::now();
 
     #pragma omp parallel
     {
@@ -112,9 +112,9 @@ void handle_image(string input_path, string output_path, float coeff, bool debug
     }
 
     if (debug) {
-        end_time = std::chrono::high_resolution_clock::now();
+        end_time = chrono::high_resolution_clock::now();
         cout << "Frequences1 in " << chrono::duration_cast<chrono::milliseconds>(end_time - start_time).count() << "ms" << endl;
-        start_time = std::chrono::high_resolution_clock::now();
+        start_time = chrono::high_resolution_clock::now();
     }
 
     for (int pixel_index = thread_block_size * freq_threads; pixel_index < colorwise_size; ++pixel_index) {
@@ -122,7 +122,7 @@ void handle_image(string input_path, string output_path, float coeff, bool debug
     }
 
     if (debug) {
-        end_time = std::chrono::high_resolution_clock::now();
+        end_time = chrono::high_resolution_clock::now();
         cout << "Frequences2 in " << chrono::duration_cast<chrono::milliseconds>(end_time - start_time).count() << "ms" << endl;
     }
 
@@ -130,7 +130,7 @@ void handle_image(string input_path, string output_path, float coeff, bool debug
     int source_min, source_max;
     float needed_borders = coeff * size;
 
-    if (debug) start_time = std::chrono::high_resolution_clock::now();
+    if (debug) start_time = chrono::high_resolution_clock::now();
 
     // #pragma omp parallel sections
     {
@@ -161,7 +161,7 @@ void handle_image(string input_path, string output_path, float coeff, bool debug
 
 
     if (debug) {
-        end_time = std::chrono::high_resolution_clock::now();
+        end_time = chrono::high_resolution_clock::now();
         cout << "Borders in " << chrono::duration_cast<chrono::milliseconds>(end_time - start_time).count() << "ms" << endl;
         cout << "min, max = " << (int) source_min << ' ' << (int) source_max << endl;
     }
@@ -174,7 +174,7 @@ void handle_image(string input_path, string output_path, float coeff, bool debug
         mapping[i] = min((float) 255.0, tmp * max(0, i - source_min));
     }
 
-    if (debug) start_time = std::chrono::high_resolution_clock::now();
+    if (debug) start_time = chrono::high_resolution_clock::now();
 
     #pragma omp parallel for
     for (int pixel_index = 0; pixel_index < colorwise_size; ++pixel_index) {
@@ -192,7 +192,7 @@ void handle_image(string input_path, string output_path, float coeff, bool debug
     //     }
     // }
 
-    end_time = std::chrono::high_resolution_clock::now();
+    end_time = chrono::high_resolution_clock::now();
     float elapsed = ((float) chrono::duration_cast<chrono::microseconds>(end_time - start_time).count()) / 1000;
     // cout << "Processed in " << elapsed << "us" << endl;
     printf("Time (%i thread(s)): %g ms\n", THREADS_COUNT, elapsed);
@@ -202,7 +202,7 @@ void handle_image(string input_path, string output_path, float coeff, bool debug
 
     if (debug) {
         cout << '\n' << "Writing output..." << endl;
-        start_time = std::chrono::high_resolution_clock::now();
+        start_time = chrono::high_resolution_clock::now();
     }
 
     // Old output
@@ -216,15 +216,12 @@ void handle_image(string input_path, string output_path, float coeff, bool debug
     // output.close();
 
     FILE * output = fopen(output_path.c_str(), "wb");
-
     fprintf(output, "P%d\n%d %d\n%d\n", (colored ? 6 : 5), width, height, color_space);
-
     fwrite(image, 1, colorwise_size, output);
-
     fclose(output);
 
     if (debug) {
-        end_time = std::chrono::high_resolution_clock::now();
+        end_time = chrono::high_resolution_clock::now();
         cout << "Wrote in " << chrono::duration_cast<chrono::milliseconds>(end_time - start_time).count() << "ms" << endl;
     }
 
@@ -240,8 +237,8 @@ void handle_image(string input_path, string output_path, float coeff, bool debug
 int main(int argc, char* argv[]) {
     omp_set_nested(1);
 
-    // omp_set_num_threads(72);
-    // handle_image("images/rgb.pnm", "result/rgb.pnm", 0, true);
+    // omp_set_num_threads(1);
+    // handle_image("images/rgb.pnm", "result/rgb.pnm", 0, false);
 
     // omp_set_num_threads(72);
     // handle_image("images/picTest9.pnm", "result/picTest9.pnm", 0, true);
