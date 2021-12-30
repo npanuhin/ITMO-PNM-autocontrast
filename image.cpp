@@ -9,7 +9,6 @@
 #pragma GCC target("sse,sse2,sse3,ssse3,sse4,popcnt,abm,mmx,tune=native")
 #pragma GCC target("avx2")
 
-#include <algorithm>
 #include <iostream>
 #include <fstream>
 #include <sstream>
@@ -18,10 +17,6 @@
 
 using namespace std;
 
-// inline bool file_exists(const string& name) {
-//   struct stat buffer;   
-//   return (stat (name.c_str(), &buffer) == 0); 
-// }
 
 
 void handle_image(string input_path, string output_path, float coeff, bool debug=false) {
@@ -29,7 +24,7 @@ void handle_image(string input_path, string output_path, float coeff, bool debug
     chrono::time_point<chrono::high_resolution_clock> start_time, end_time;
     const int THREADS_COUNT = omp_get_max_threads();
 
-    // ================================================= INITIALIZATION ==================================================
+    // ================================================ INITIALIZATION =================================================
 
     FILE * input = fopen(input_path.c_str(), "rb");
 
@@ -66,7 +61,7 @@ void handle_image(string input_path, string output_path, float coeff, bool debug
     }
 
 
-    // ====================================================== INPUT ======================================================
+    // ===================================================== INPUT =====================================================
 
     if (debug) {
         cout << "Reading file..." << endl;
@@ -84,7 +79,7 @@ void handle_image(string input_path, string output_path, float coeff, bool debug
 
 
 
-    // =================================================== PROCESSING ====================================================
+    // ================================================== PROCESSING ===================================================
 
     if (debug) cout << '\n' << "Processing..." << endl;
     start_time = std::chrono::high_resolution_clock::now();
@@ -203,7 +198,7 @@ void handle_image(string input_path, string output_path, float coeff, bool debug
     printf("Time (%i thread(s)): %g ms\n", THREADS_COUNT, elapsed);
 
 
-    // ====================================================== OUTPUT ======================================================
+    // ==================================================== OUTPUT =====================================================
 
     if (debug) {
         cout << '\n' << "Writing output..." << endl;
@@ -233,7 +228,7 @@ void handle_image(string input_path, string output_path, float coeff, bool debug
         cout << "Wrote in " << chrono::duration_cast<chrono::milliseconds>(end_time - start_time).count() << "ms" << endl;
     }
 
-    // ===================================================== THE END ======================================================
+    // ==================================================== THE END ====================================================
 
     free(image);
 
@@ -245,8 +240,8 @@ void handle_image(string input_path, string output_path, float coeff, bool debug
 int main(int argc, char* argv[]) {
     omp_set_nested(1);
 
-    omp_set_num_threads(72);
-    handle_image("images/rgb.pnm", "result/rgb.pnm", 0, true);
+    // omp_set_num_threads(72);
+    // handle_image("images/rgb.pnm", "result/rgb.pnm", 0, true);
 
     // omp_set_num_threads(72);
     // handle_image("images/picTest9.pnm", "result/picTest9.pnm", 0, true);
@@ -257,7 +252,7 @@ int main(int argc, char* argv[]) {
     //     omp_set_num_threads(1 << thread_cnt);
     //     handle_image("images/rgb.pnm", "result/rgb.pnm", 0, false);
     // }
-    return 1;
+    // return 1;
 
 
     if (argc > 1) {
@@ -292,17 +287,17 @@ int main(int argc, char* argv[]) {
     } else {
         cout << "No arguments specified, running with debug configuration..." << endl;
 
-        // handle_image("images/low_contrast.small.pnm", "result/low_contrast.small.pnm", 0.01, false);
-        // handle_image("images/low_contrast.large.pnm", "result/low_contrast.large.pnm", 0.01, false);
-        // handle_image("images/rgb.pnm", "result/rgb.pnm", 0, false);
+        handle_image("images/low_contrast.small.pnm", "result/low_contrast.small.pnm", 0.01, false);
+        handle_image("images/low_contrast.large.pnm", "result/low_contrast.large.pnm", 0.01, false);
+        handle_image("images/rgb.pnm", "result/rgb.pnm", 0, false);
 
-        // for (int i = 0; i <= 12; ++i) {
-        //     if (i == 8) continue;
-        //     handle_image(
-        //         "images/picTest" + to_string(i) + ".pnm",
-        //         "result/picTest" + to_string(i) + ".pnm",
-        //         0
-        //     );
-        // }
+        for (int i = 0; i <= 12; ++i) {
+            if (i == 8) continue;
+            handle_image(
+                "images/picTest" + to_string(i) + ".pnm",
+                "result/picTest" + to_string(i) + ".pnm",
+                0
+            );
+        }
     }
 }
