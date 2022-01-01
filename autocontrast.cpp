@@ -1,5 +1,5 @@
 //                                   ┌───────────────────────────────────────────┐
-//                                   │    Copyright (c) 2021 Nikita Paniukhin    │
+//                                   │    Copyright (c) 2022 Nikita Paniukhin    │
 //                                   │      Licensed under the MIT license       │
 //                                   └───────────────────────────────────────────┘
 //
