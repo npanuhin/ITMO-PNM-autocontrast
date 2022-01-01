@@ -181,20 +181,8 @@ void handle_image(string input_path, string output_path, float coeff, bool debug
         image[pixel_index] = mapping[image[pixel_index]];
     }
 
-    // Old processing
-    // #pragma omp parallel num_threads(72)
-    // {
-    //     #pragma omp for
-    //     for (int pixel_index = 0; pixel_index < size; ++pixel_index) {
-    //         for (int color = 0; color < 3; ++color) {
-    //             image[color][pixel_index] = min(255.0, max(0.0, image[color][pixel_index] - s_min) * tmp);
-    //         }
-    //     }
-    // }
-
     end_time = chrono::high_resolution_clock::now();
     float elapsed = ((float) chrono::duration_cast<chrono::microseconds>(end_time - start_time).count()) / 1000;
-    // cout << "Processed in " << elapsed << "us" << endl;
     printf("Time (%i thread(s)): %g ms\n", THREADS_COUNT, elapsed);
 
 
@@ -205,40 +193,30 @@ void handle_image(string input_path, string output_path, float coeff, bool debug
         start_time = chrono::high_resolution_clock::now();
     }
 
-    // Old output
-    // fstream output(output_path, ios::out | ios::binary);
-    // output << "P6" << '\n' << width << ' ' << height << '\n' << color_space << '\n';
-    // for (int pixel_index = 0; pixel_index < size; ++pixel_index) {
-    //     for (int i = 0; i < 3; ++i) {
-    //         output << (char) image[i][pixel_index];
-    //     }
-    // }
-    // output.close();
-
-    FILE * output = fopen(output_path.c_str(), "wb");
-    fprintf(output, "P%d\n%d %d\n%d\n", (colored ? 6 : 5), width, height, color_space);
-    fwrite(image, 1, colorwise_size, output);
-    fclose(output);
+    if (!debug) {
+        FILE * output = fopen(output_path.c_str(), "wb");
+        fprintf(output, "P%d\n%d %d\n%d\n", (colored ? 6 : 5), width, height, color_space);
+        fwrite(image, 1, colorwise_size, output);
+        fclose(output);
+    }
 
     if (debug) {
         end_time = chrono::high_resolution_clock::now();
         cout << "Wrote in " << chrono::duration_cast<chrono::milliseconds>(end_time - start_time).count() << "ms" << endl;
     }
 
+
     // ==================================================== THE END ====================================================
 
     free(image);
-
-    if (debug) {
-        cout << '\n' << '\n' << endl;
-    }
+    if (debug) cout << '\n' << '\n' << endl;
 }
 
 int main(int argc, char* argv[]) {
     omp_set_nested(1);
 
     // omp_set_num_threads(1);
-    // handle_image("images/rgb.pnm", "result/rgb.pnm", 0, false);
+    // handle_image("images/rgb.pnm", "result/rgb.pnm", 0, true);
 
     // omp_set_num_threads(72);
     // handle_image("images/picTest9.pnm", "result/picTest9.pnm", 0, true);
