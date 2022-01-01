@@ -5,9 +5,9 @@
 //
 // =====================================================================================================================
 
-#pragma GCC optimize("Ofast")
-#pragma GCC target("sse,sse2,sse3,ssse3,sse4,popcnt,abm,mmx,tune=native")
-#pragma GCC target("avx2")
+// #pragma GCC optimize("Ofast")
+// #pragma GCC target("sse,sse2,sse3,ssse3,sse4,popcnt,abm,mmx,tune=native")
+// #pragma GCC target("avx2")
 
 #include <iostream>
 #include <fstream>
@@ -269,7 +269,7 @@ int main(int argc, char* argv[]) {
         }
 
         istringstream ss2(argv[4]);
-        double coeff;
+        float coeff;
         if (!(ss2 >> coeff)) {
             cout << "Invalid number: " << argv[4] << endl;
             return 1;
@@ -279,7 +279,7 @@ int main(int argc, char* argv[]) {
         }
 
         omp_set_num_threads(threads_count);
-        handle_image(argv[2], argv[3], (float) coeff);
+        handle_image(argv[2], argv[3], coeff);
 
     } else {
         cout << "No arguments specified, running with debug configuration..." << endl;
