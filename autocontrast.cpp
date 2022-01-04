@@ -13,6 +13,7 @@
 #include <fstream>
 #include <sstream>
 #include <chrono>
+#include <cmath>
 #include <omp.h>
 
 using namespace std;
@@ -171,7 +172,7 @@ void handle_image(string input_path, string output_path, float coeff, bool debug
 
     uint8_t mapping[256];
     for (int i = 0; i < 256; ++i) {
-        mapping[i] = min((float) 255.0, tmp * max(0, i - source_min));
+        mapping[i] = (uint8_t) min(255, (int) round(tmp * max(0, i - source_min)));
     }
 
     if (debug) start_time = chrono::high_resolution_clock::now();
