@@ -23,7 +23,12 @@ using namespace std;
 void handle_image(string input_path, string output_path, float coeff, bool debug=false) {
     if (debug) cout << "Handling \"" << input_path << "\"..." << endl;
     chrono::time_point<chrono::high_resolution_clock> start_time, end_time;
-    const int THREADS_COUNT = omp_get_max_threads();
+
+    #ifdef _OPENMP
+        const int THREADS_COUNT = omp_get_max_threads();
+    #else
+        const int THREADS_COUNT = 1;
+    #endif
 
     // ================================================ INITIALIZATION =================================================
 
@@ -93,8 +98,13 @@ void handle_image(string input_path, string output_path, float coeff, bool debug
 
     #pragma omp parallel
     {
-        int cur_thread_num = omp_get_thread_num(),
-            start = thread_block_size * cur_thread_num,
+        #ifdef _OPENMP
+            int cur_thread_num = omp_get_thread_num();
+        #else
+            int cur_thread_num = 0;
+        #endif
+
+        int start = thread_block_size * cur_thread_num,
             end = thread_block_size * (cur_thread_num + 1);
 
         size_t tmp_freq[256] = {0};
@@ -212,7 +222,11 @@ void handle_image(string input_path, string output_path, float coeff, bool debug
 }
 
 int main(int argc, char* argv[]) {
-    omp_set_nested(1);
+    #ifdef _OPENMP
+        omp_set_nested(1);
+    #else
+        cout << "Warning: OpenMP is turned off!" << endl;
+    #endif
 
     // omp_set_num_threads(1);
     // handle_image("images/rgb.pnm", "result/rgb.pnm", 0, true);
@@ -255,7 +269,9 @@ int main(int argc, char* argv[]) {
             return 1;
         }
 
-        omp_set_num_threads(threads_count);
+        #ifdef _OPENMP
+            omp_set_num_threads(threads_count);
+        #endif
         handle_image(argv[2], argv[3], coeff);
 
     } else {
