@@ -85,7 +85,7 @@ void handle_image(string input_path, string output_path, float coeff, bool debug
     start_time = chrono::high_resolution_clock::now();
 
     // ------------------------- Frequencies -------------------------
-    int freq_threads = THREADS_COUNT, thread_block_size = colorwise_size / THREADS_COUNT;
+    int thread_block_size = colorwise_size / THREADS_COUNT;
     size_t freq[256] = {0};
 
     if (debug) start_time = chrono::high_resolution_clock::now();
@@ -117,7 +117,7 @@ void handle_image(string input_path, string output_path, float coeff, bool debug
         start_time = chrono::high_resolution_clock::now();
     }
 
-    for (int pixel_index = thread_block_size * freq_threads; pixel_index < colorwise_size; ++pixel_index) {
+    for (int pixel_index = thread_block_size * THREADS_COUNT; pixel_index < colorwise_size; ++pixel_index) {
         ++freq[image[pixel_index]];
     }
 
@@ -137,7 +137,7 @@ void handle_image(string input_path, string output_path, float coeff, bool debug
         // #pragma omp section
         {
             size_t pref_summ;
-            for (pref_summ = 0, source_min = 0; source_min < 256; ++source_min) {
+            for (pref_summ = 0, source_min = 0; source_min < 255; ++source_min) {
                 pref_summ += freq[source_min];
                 if ((float) pref_summ > needed_borders) {
                     pref_summ -= freq[source_min];
@@ -149,7 +149,7 @@ void handle_image(string input_path, string output_path, float coeff, bool debug
         // #pragma omp section
         {
             size_t pref_summ;
-            for (pref_summ = 0, source_max = 255; source_max >= 0; --source_max) {
+            for (pref_summ = 0, source_max = 255; source_max > 0; --source_max) {
                 pref_summ += freq[source_max];
                 if ((float) pref_summ > needed_borders) {
                     pref_summ -= freq[source_max];
@@ -193,12 +193,10 @@ void handle_image(string input_path, string output_path, float coeff, bool debug
         start_time = chrono::high_resolution_clock::now();
     }
 
-    if (!debug) {
-        FILE * output = fopen(output_path.c_str(), "wb");
-        fprintf(output, "P%d\n%d %d\n%d\n", (colored ? 6 : 5), width, height, color_space);
-        fwrite(image, 1, colorwise_size, output);
-        fclose(output);
-    }
+    FILE * output = fopen(output_path.c_str(), "wb");
+    fprintf(output, "P%d\n%d %d\n%d\n", (colored ? 6 : 5), width, height, color_space);
+    fwrite(image, 1, colorwise_size, output);
+    fclose(output);
 
     if (debug) {
         end_time = chrono::high_resolution_clock::now();
