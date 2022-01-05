@@ -181,8 +181,12 @@ void handle_image(string input_path, string output_path, float coeff, bool debug
     float tmp = (float) 255.0 / (source_max - source_min);
 
     uint8_t mapping[256];
-    for (int i = 0; i < 256; ++i) {
-        mapping[i] = (uint8_t) min(255, (int) round(tmp * max(0, i - source_min)));
+    if (source_min == source_max) {
+        for (int i = 0; i < 256; ++i) mapping[i] = i;
+    } else {
+        for (int i = 0; i < 256; ++i) {
+            mapping[i] = (uint8_t) min(255, (int) round(tmp * max(0, i - source_min)));
+        }
     }
 
     if (debug) start_time = chrono::high_resolution_clock::now();
