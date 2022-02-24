@@ -5,4 +5,4 @@
 
 Остальные изображения находятся в папке [images](images) (каждое <100Мб, суммароно 335Мб)
 
-- [Report (in Russian)](report.pdf)
+- [Report (in Russian)](https://raw.githubusercontent.com/npanuhin/PNM-autocontrast/master/report.pdf)
