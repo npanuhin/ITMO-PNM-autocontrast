@@ -19,7 +19,6 @@
 using namespace std;
 
 
-
 void handle_image(string input_path, string output_path, float coeff, bool debug=false) {
     if (debug) cout << "Handling \"" << input_path << "\"..." << endl;
     chrono::time_point<chrono::high_resolution_clock> start_time, end_time;
@@ -245,7 +244,6 @@ int main(int argc, char* argv[]) {
     //     handle_image("images/rgb.pnm", "result/rgb.pnm", 0, false);
     // }
     // return 1;
-
 
     if (argc > 1) {
         if (argc < 5) {

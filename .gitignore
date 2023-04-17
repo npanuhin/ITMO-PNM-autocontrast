@@ -6,6 +6,3 @@ FOCtests/
 # *.pnm
 # *.ppm
 # *.pgm
-
-/*/picTest8*.p?m
-/*/rgb.p?m
